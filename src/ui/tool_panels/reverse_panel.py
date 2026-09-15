@@ -18,7 +18,7 @@ from ..progress import ProgressPanel
 from . import common
 
 
-class ReversePanel(ctk.CTkFrame):
+class ReversePanel(ctk.CTkScrollableFrame):
     def __init__(self, master, **kwargs) -> None:
         super().__init__(master, fg_color="transparent", **kwargs)
         self._queue = FileQueue()
@@ -58,7 +58,7 @@ class ReversePanel(ctk.CTkFrame):
             on_remove_selected=self._on_remove_selected,
             on_clear=self._on_clear,
         )
-        self._file_list.pack(fill="both", expand=True, pady=(0, 14))
+        self._file_list.pack(fill="x", pady=(0, 14))
 
         self._progress = ProgressPanel(self, on_cancel=self._on_cancel)
         self._progress.pack(fill="x", pady=(0, 14))

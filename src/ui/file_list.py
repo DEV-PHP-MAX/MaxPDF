@@ -65,6 +65,10 @@ class FileListWidget(ctk.CTkFrame):
             show="headings",
             style="MaxPDF.Treeview",
             selectmode="extended",
+            # Altura fixa em número de linhas (não em pixels): garante um
+            # tamanho previsível e razoável mesmo dentro do painel com
+            # rolagem, independente da escala de DPI do Windows.
+            height=7,
         )
         self._tree.heading("index", text="#")
         self._tree.heading("name", text="Nome")

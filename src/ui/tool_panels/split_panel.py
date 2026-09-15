@@ -16,7 +16,7 @@ from ..progress import ProgressPanel
 from . import common
 
 
-class SplitPanel(ctk.CTkFrame):
+class SplitPanel(ctk.CTkScrollableFrame):
     def __init__(self, master, **kwargs) -> None:
         super().__init__(master, fg_color="transparent", **kwargs)
         self._selected_file: Optional[Path] = None

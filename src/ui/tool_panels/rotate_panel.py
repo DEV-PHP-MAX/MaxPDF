@@ -20,7 +20,7 @@ from . import common
 ANGLE_OPTIONS = ["90°", "180°", "270°"]
 
 
-class RotatePanel(ctk.CTkFrame):
+class RotatePanel(ctk.CTkScrollableFrame):
     def __init__(self, master, **kwargs) -> None:
         super().__init__(master, fg_color="transparent", **kwargs)
         self._queue = FileQueue()
@@ -97,7 +97,7 @@ class RotatePanel(ctk.CTkFrame):
         self._file_list = FileListWidget(
             self, on_remove_selected=self._on_remove_selected, on_clear=self._on_clear
         )
-        self._file_list.pack(fill="both", expand=True, pady=(0, 14))
+        self._file_list.pack(fill="x", pady=(0, 14))
 
         self._progress = ProgressPanel(self, on_cancel=self._on_cancel)
         self._progress.pack(fill="x", pady=(0, 14))

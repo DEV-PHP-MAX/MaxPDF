@@ -17,7 +17,7 @@ from ..progress import ProgressPanel
 from . import common
 
 
-class ImagesPanel(ctk.CTkFrame):
+class ImagesPanel(ctk.CTkScrollableFrame):
     def __init__(self, master, **kwargs) -> None:
         super().__init__(master, fg_color="transparent", **kwargs)
         self._queue = FileQueue()
@@ -53,7 +53,7 @@ class ImagesPanel(ctk.CTkFrame):
             on_clear=self._on_clear,
             on_move=self._on_move,
         )
-        self._file_list.pack(fill="both", expand=True, pady=(0, 14))
+        self._file_list.pack(fill="x", pady=(0, 14))
 
         self._progress = ProgressPanel(self, on_cancel=self._on_cancel)
         self._progress.pack(fill="x", pady=(0, 14))
