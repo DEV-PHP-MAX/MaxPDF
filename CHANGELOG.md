@@ -5,6 +5,22 @@ arquivo. O formato segue aproximadamente o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.0.2] - 2026-09-15
+
+### Corrigido
+
+- Corrige o botão principal de cada ferramenta (ex.: "INVERTER
+  PÁGINAS", "JUNTAR PDFs", "GIRAR PÁGINAS") ficando cortado/invisível
+  na parte inferior da janela quando a lista de arquivos e as demais
+  opções da tela já ocupavam todo o espaço vertical disponível —
+  especialmente perceptível com escala de DPI do Windows acima de
+  100%. Os painéis agora têm rolagem própria, garantindo que todos os
+  botões e controles fiquem sempre acessíveis, independentemente do
+  tamanho da janela ou da escala de tela.
+- Reduz a altura padrão da lista de arquivos e aumenta ligeiramente a
+  altura padrão da janela para que o conteúdo caiba sem rolagem na
+  maioria dos casos comuns.
+
 ## [1.0.1] - 2026-09-15
 
 ### Corrigido
