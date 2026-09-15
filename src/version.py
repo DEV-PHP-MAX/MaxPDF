@@ -8,7 +8,7 @@ APP_NAME = "MAX PDF"
 APP_SUBTITLE = "Ferramentas para PDF"
 
 # Semantic Versioning: MAJOR.MINOR.PATCH
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.1.0"
 
 
 def get_display_version() -> str:

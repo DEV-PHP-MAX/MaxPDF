@@ -5,6 +5,22 @@ arquivo. O formato segue aproximadamente o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.1.0] - 2026-09-15
+
+### Adicionado
+
+- O arrastar-e-soltar na ferramenta Juntar PDFs (e em Imagens → PDF)
+  agora dá feedback visual em tempo real: a linha arrastada acompanha
+  o cursor e a lista é redesenhada a cada movimento do mouse, em vez
+  de só reordenar no momento em que o botão é solto.
+
+### Corrigido
+
+- Soltar o item arrastado acima da primeira linha ou abaixo da
+  última agora move corretamente para o início/fim da lista — antes,
+  essa ação não tinha efeito nenhum (só funcionava soltando bem em
+  cima de outra linha existente).
+
 ## [1.0.2] - 2026-09-15
 
 ### Corrigido
