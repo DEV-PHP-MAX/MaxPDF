@@ -11,7 +11,7 @@ import customtkinter as ctk
 from ...tools.images_to_pdf import DEFAULT_OUTPUT_NAME, is_supported_image, run_images_to_pdf
 from ...utils.batch import BatchResult
 from ...utils.file_scanner import FileQueue, PdfFile
-from .. import dialogs
+from .. import dialogs, theme
 from ..file_list import FileListWidget
 from ..progress import ProgressPanel
 from . import common
@@ -94,7 +94,10 @@ class ImagesPanel(ctk.CTkFrame):
 
     def _update_run_button_state(self) -> None:
         running = self._runner is not None
-        self._run_button.configure(state="disabled" if (len(self._queue) == 0 or running) else "normal")
+        enabled = len(self._queue) > 0 and not running
+        common.set_button_enabled(
+            self._run_button, enabled, fg_color=theme.COLOR_PRIMARY, hover_color=theme.COLOR_PRIMARY_HOVER
+        )
 
     # -- processamento --------------------------------------------------
     def _start(self) -> None:
@@ -105,7 +108,9 @@ class ImagesPanel(ctk.CTkFrame):
         if output_path is None:
             return
 
-        self._run_button.configure(state="disabled")
+        common.set_button_enabled(
+            self._run_button, False, fg_color=theme.COLOR_PRIMARY, hover_color=theme.COLOR_PRIMARY_HOVER
+        )
         self._progress.start()
         self._start_time = time.monotonic()
 

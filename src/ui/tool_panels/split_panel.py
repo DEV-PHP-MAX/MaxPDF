@@ -91,8 +91,9 @@ class SplitPanel(ctk.CTkFrame):
 
     def _update_run_button_state(self) -> None:
         running = self._runner is not None
-        self._run_button.configure(
-            state="disabled" if (self._selected_file is None or running) else "normal"
+        enabled = self._selected_file is not None and not running
+        common.set_button_enabled(
+            self._run_button, enabled, fg_color=theme.COLOR_PRIMARY, hover_color=theme.COLOR_PRIMARY_HOVER
         )
 
     def _start(self) -> None:
@@ -109,7 +110,9 @@ class SplitPanel(ctk.CTkFrame):
         if destination is None:
             return
 
-        self._run_button.configure(state="disabled")
+        common.set_button_enabled(
+            self._run_button, False, fg_color=theme.COLOR_PRIMARY, hover_color=theme.COLOR_PRIMARY_HOVER
+        )
         self._progress.start()
         self._start_time = time.monotonic()
 

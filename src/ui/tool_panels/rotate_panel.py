@@ -136,7 +136,10 @@ class RotatePanel(ctk.CTkFrame):
 
     def _update_run_button_state(self) -> None:
         running = self._runner is not None
-        self._run_button.configure(state="disabled" if (len(self._queue) == 0 or running) else "normal")
+        enabled = len(self._queue) > 0 and not running
+        common.set_button_enabled(
+            self._run_button, enabled, fg_color=theme.COLOR_PRIMARY, hover_color=theme.COLOR_PRIMARY_HOVER
+        )
 
     # -- processamento --------------------------------------------------
     def _start(self) -> None:
@@ -155,7 +158,9 @@ class RotatePanel(ctk.CTkFrame):
         angle = int(self._angle_var.get().replace("°", ""))
         pages_spec = self._pages_entry.get().strip() if self._pages_mode_var.get() == "specific" else None
 
-        self._run_button.configure(state="disabled")
+        common.set_button_enabled(
+            self._run_button, False, fg_color=theme.COLOR_PRIMARY, hover_color=theme.COLOR_PRIMARY_HOVER
+        )
         self._progress.start()
         self._start_time = time.monotonic()
 

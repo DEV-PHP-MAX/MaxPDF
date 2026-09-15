@@ -14,6 +14,26 @@ import customtkinter as ctk
 
 from ...utils.file_scanner import FolderScanner, PdfFile
 from .. import theme
+from ..buttons import danger_button, primary_button, secondary_button, set_button_enabled
+
+__all__ = [
+    "danger_button",
+    "primary_button",
+    "secondary_button",
+    "set_button_enabled",
+    "get_last_directory",
+    "set_last_directory",
+    "card",
+    "section_title",
+    "section_description",
+    "PDF_FILETYPES",
+    "IMAGE_FILETYPES",
+    "FilePickerRow",
+    "scan_folder_async",
+    "pick_destination_folder",
+    "pick_save_file",
+    "bounce_to_ui",
+]
 
 # Lembra o último diretório usado durante a sessão (apenas em memória;
 # não é persistido em disco, conforme item 54 do escopo).
@@ -51,32 +71,6 @@ def section_description(master, text: str) -> ctk.CTkLabel:
         justify="left",
         wraplength=780,
     )
-
-
-def primary_button(master, text: str, command: Callable[[], None], **kwargs) -> ctk.CTkButton:
-    defaults = dict(
-        fg_color=theme.COLOR_PRIMARY,
-        hover_color=theme.COLOR_PRIMARY_HOVER,
-        font=theme.font(13, "bold"),
-        height=42,
-        corner_radius=10,
-        text_color="#FFFFFF",
-    )
-    defaults.update(kwargs)
-    return ctk.CTkButton(master, text=text, command=command, **defaults)
-
-
-def secondary_button(master, text: str, command: Callable[[], None], **kwargs) -> ctk.CTkButton:
-    defaults = dict(
-        fg_color=theme.COLOR_BACKGROUND,
-        text_color=theme.COLOR_TEXT_PRIMARY,
-        hover_color=theme.COLOR_BORDER,
-        font=theme.font(13, "bold"),
-        height=38,
-        corner_radius=10,
-    )
-    defaults.update(kwargs)
-    return ctk.CTkButton(master, text=text, command=command, **defaults)
 
 
 PDF_FILETYPES: Tuple[Tuple[str, str], ...] = (("Arquivos PDF", "*.pdf *.PDF"), ("Todos os arquivos", "*.*"))

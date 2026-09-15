@@ -15,6 +15,7 @@ from typing import Callable, List, Optional, Sequence
 import customtkinter as ctk
 
 from . import theme
+from .buttons import danger_button, secondary_button
 
 
 class FileListWidget(ctk.CTkFrame):
@@ -86,41 +87,18 @@ class FileListWidget(ctk.CTkFrame):
         actions.pack(fill="x", padx=16, pady=(0, 14))
 
         if show_reorder:
-            ctk.CTkButton(
-                actions,
-                text="↑ SUBIR",
-                width=90,
-                fg_color=theme.COLOR_BACKGROUND,
-                text_color=theme.COLOR_TEXT_PRIMARY,
-                hover_color=theme.COLOR_BORDER,
-                command=lambda: self._move_selected(-1),
+            secondary_button(
+                actions, "↑ SUBIR", lambda: self._move_selected(-1), width=90, height=34
             ).pack(side="left", padx=(0, 8))
-            ctk.CTkButton(
-                actions,
-                text="↓ DESCER",
-                width=90,
-                fg_color=theme.COLOR_BACKGROUND,
-                text_color=theme.COLOR_TEXT_PRIMARY,
-                hover_color=theme.COLOR_BORDER,
-                command=lambda: self._move_selected(1),
+            secondary_button(
+                actions, "↓ DESCER", lambda: self._move_selected(1), width=90, height=34
             ).pack(side="left", padx=(0, 8))
 
-        ctk.CTkButton(
-            actions,
-            text="REMOVER SELECIONADO",
-            fg_color=theme.COLOR_BACKGROUND,
-            text_color=theme.COLOR_TEXT_PRIMARY,
-            hover_color=theme.COLOR_BORDER,
-            command=self._remove_selected,
+        secondary_button(
+            actions, "REMOVER SELECIONADO", self._remove_selected, height=34
         ).pack(side="left", padx=(0, 8))
 
-        ctk.CTkButton(
-            actions,
-            text="LIMPAR LISTA",
-            fg_color=theme.COLOR_ERROR,
-            hover_color=theme.COLOR_ERROR_HOVER,
-            command=self._clear,
-        ).pack(side="left")
+        danger_button(actions, "LIMPAR LISTA", self._clear, height=34).pack(side="left")
 
     # -- estilo -----------------------------------------------------
     def _configure_style(self) -> None:

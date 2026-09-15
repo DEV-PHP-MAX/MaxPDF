@@ -14,6 +14,7 @@ import customtkinter as ctk
 
 from ..utils.helpers import format_elapsed_clock
 from . import theme
+from .buttons import danger_button, set_button_enabled
 
 
 class ProgressPanel(ctk.CTkFrame):
@@ -35,7 +36,7 @@ class ProgressPanel(ctk.CTkFrame):
         self._elapsed_label.pack(side="right")
 
         self._bar = ctk.CTkProgressBar(
-            self, progress_color=theme.COLOR_PRIMARY, fg_color=theme.COLOR_BACKGROUND
+            self, progress_color=theme.COLOR_PRIMARY, fg_color=theme.COLOR_BACKGROUND, height=10
         )
         self._bar.set(0)
         self._bar.pack(fill="x", padx=16, pady=(4, 10))
@@ -43,27 +44,30 @@ class ProgressPanel(ctk.CTkFrame):
         bottom = ctk.CTkFrame(self, fg_color="transparent")
         bottom.pack(fill="x", padx=16, pady=(0, 14))
 
-        self._cancel_button = ctk.CTkButton(
-            bottom,
-            text="CANCELAR",
-            fg_color=theme.COLOR_ERROR,
-            hover_color=theme.COLOR_ERROR_HOVER,
-            width=120,
-            command=self._handle_cancel,
-            state="disabled",
+        self._cancel_button = danger_button(
+            bottom, "CANCELAR", self._handle_cancel, width=120, height=36
         )
         self._cancel_button.pack(side="right")
+        self._set_cancel_enabled(False)
+
+    def _set_cancel_enabled(self, enabled: bool) -> None:
+        set_button_enabled(
+            self._cancel_button,
+            enabled,
+            fg_color=theme.COLOR_ERROR,
+            hover_color=theme.COLOR_ERROR_HOVER,
+        )
 
     def reset(self) -> None:
         self._bar.set(0)
         self._status_label.configure(text="Pronto.")
         self._elapsed_label.configure(text="")
-        self._cancel_button.configure(state="disabled")
+        self._set_cancel_enabled(False)
 
     def start(self) -> None:
         self._bar.set(0)
         self._status_label.configure(text="Iniciando...")
-        self._cancel_button.configure(state="normal")
+        self._set_cancel_enabled(True)
 
     def update_progress(self, current: int, total: int, label: str, elapsed_seconds: float = 0.0) -> None:
         fraction = (current / total) if total else 0
@@ -78,10 +82,10 @@ class ProgressPanel(ctk.CTkFrame):
     def finish(self, text: str) -> None:
         self._bar.set(1.0)
         self._status_label.configure(text=text)
-        self._cancel_button.configure(state="disabled")
+        self._set_cancel_enabled(False)
 
     def _handle_cancel(self) -> None:
-        self._cancel_button.configure(state="disabled")
+        self._set_cancel_enabled(False)
         self._status_label.configure(text="Cancelando... aguarde o arquivo atual terminar.")
         if self._on_cancel:
             self._on_cancel()
