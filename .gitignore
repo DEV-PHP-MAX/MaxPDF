@@ -1,0 +1,29 @@
+__pycache__/
+*.pyc
+*.pyo
+*.spec
+
+build/
+dist/
+
+.venv/
+venv/
+env/
+
+.env
+
+.idea/
+.vscode/
+
+*.log
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Arquivos de teste locais (nunca versionar PDFs pessoais)
+local_test_files/
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
