@@ -41,7 +41,16 @@ class FileListWidget(ctk.CTkFrame):
         self._on_clear = on_clear
         self._on_move = on_move
         self._show_reorder = show_reorder
-        self._drag_start_iid: Optional[str] = None
+
+        # Estado do arrastar-e-soltar. `_current_rows` guarda os dados
+        # (nome, caminho) da última chamada a `refresh()`, e
+        # `_live_order` é a ordem visual atual como uma lista de índices
+        # ORIGINAIS (posição em `_current_rows`/na fila real) — permite
+        # redesenhar a lista em tempo real durante o arraste sem
+        # depender do chamador a cada movimento do mouse.
+        self._current_rows: List[Sequence[str]] = []
+        self._live_order: List[int] = []
+        self._drag_original_index: Optional[int] = None
 
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", padx=16, pady=(14, 6))
@@ -136,11 +145,20 @@ class FileListWidget(ctk.CTkFrame):
     # -- API pública --------------------------------------------------
     def refresh(self, rows: Sequence[Sequence[str]]) -> None:
         """Atualiza a lista. `rows` é uma sequência de (nome, caminho)."""
-        self._tree.delete(*self._tree.get_children())
-        for i, (name, path) in enumerate(rows, start=1):
-            self._tree.insert("", "end", iid=str(i - 1), values=(i, name, path))
-        count = len(rows)
+        self._current_rows = list(rows)
+        self._live_order = list(range(len(self._current_rows)))
+        self._redraw()
+        count = len(self._current_rows)
         self._count_label.configure(text="1 arquivo" if count == 1 else f"{count} arquivos")
+
+    def _redraw(self) -> None:
+        """Redesenha a treeview a partir de `_live_order`, sem alterar
+        os dados — usado tanto por `refresh()` quanto, continuamente,
+        durante o arrastar-e-soltar."""
+        self._tree.delete(*self._tree.get_children())
+        for visual_pos, original_index in enumerate(self._live_order, start=1):
+            name, path = self._current_rows[original_index]
+            self._tree.insert("", "end", iid=str(original_index), values=(visual_pos, name, path))
 
     def get_selected_indices(self) -> List[int]:
         return sorted(int(iid) for iid in self._tree.selection())
@@ -161,23 +179,65 @@ class FileListWidget(ctk.CTkFrame):
             self._on_move(indices[0], indices[0] + delta)
 
     # -- drag and drop ------------------------------------------------
+    # A linha arrastada acompanha o cursor em tempo real (a lista é
+    # redesenhada a cada movimento do mouse); o resultado só é
+    # comunicado ao painel (via `on_move`) uma única vez, ao soltar o
+    # botão do mouse. Soltar acima da primeira linha ou abaixo da
+    # última move o item para o início/fim da lista, respectivamente.
     def _on_drag_start(self, event: tk.Event) -> None:
-        self._drag_start_iid = self._tree.identify_row(event.y)
+        iid = self._tree.identify_row(event.y)
+        self._drag_original_index = int(iid) if iid else None
+        if self._drag_original_index is not None:
+            self._tree.selection_set(iid)
 
     def _on_drag_motion(self, event: tk.Event) -> None:
-        if self._drag_start_iid is None:
+        if self._drag_original_index is None or not self._live_order:
             return
-        target_iid = self._tree.identify_row(event.y)
-        if target_iid and target_iid != self._drag_start_iid:
-            self._tree.selection_set(self._drag_start_iid)
+
+        target_pos = self._resolve_drop_position(event.y)
+        current_pos = self._live_order.index(self._drag_original_index)
+        target_pos = max(0, min(target_pos, len(self._live_order) - 1))
+
+        if target_pos == current_pos:
+            return
+
+        self._live_order.pop(current_pos)
+        self._live_order.insert(target_pos, self._drag_original_index)
+        self._redraw()
+        self._tree.selection_set(str(self._drag_original_index))
 
     def _on_drag_release(self, event: tk.Event) -> None:
-        if self._drag_start_iid is None:
+        if self._drag_original_index is None:
             return
-        target_iid = self._tree.identify_row(event.y)
-        start_iid = self._drag_start_iid
-        self._drag_start_iid = None
-        if not target_iid or target_iid == start_iid:
-            return
-        if self._on_move:
-            self._on_move(int(start_iid), int(target_iid))
+
+        original_index = self._drag_original_index
+        self._drag_original_index = None
+        final_pos = self._live_order.index(original_index)
+
+        if final_pos != original_index and self._on_move:
+            self._on_move(original_index, final_pos)
+
+    def _resolve_drop_position(self, y: int) -> int:
+        """Calcula em qual posição visual (0-indexada) o item deveria
+        ficar, com base na posição vertical do cursor — inclusive
+        quando o cursor está acima da primeira linha ou abaixo da
+        última, o que antes fazia o arraste simplesmente não fazer
+        nada."""
+        children = self._tree.get_children()
+        if not children:
+            return 0
+
+        hovered = self._tree.identify_row(y)
+        if hovered:
+            position = list(children).index(hovered)
+            bbox = self._tree.bbox(hovered)
+            if bbox:
+                row_top, row_height = bbox[1], bbox[3]
+                if y > row_top + row_height / 2:
+                    position += 1
+            return position
+
+        first_bbox = self._tree.bbox(children[0])
+        if first_bbox and y < first_bbox[1]:
+            return 0
+        return len(children)
