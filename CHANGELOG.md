@@ -5,6 +5,22 @@ arquivo. O formato segue aproximadamente o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.0.1] - 2026-09-15
+
+### Corrigido
+
+- Melhora o contraste e a aparência dos botões em toda a interface:
+  o botão secundário ("Selecionar pasta", "Remover selecionado",
+  "Subir"/"Descer") agora usa fundo branco com borda visível em vez
+  de se confundir com o fundo da página.
+- Corrige o estado desabilitado dos botões principais (ex.: "INVERTER
+  PÁGINAS", "CANCELAR"), que antes ficava com uma cor "lavada" da cor
+  original e parecia quebrado; agora usa um cinza neutro consistente
+  enquanto a ação não está disponível.
+- Centraliza a criação de botões em `ui/buttons.py`, eliminando
+  duplicação de estilo entre `file_list.py`, `progress.py` e os
+  painéis de ferramenta.
+
 ## [1.0.0] - 2026-09-15
 
 ### Adicionado
