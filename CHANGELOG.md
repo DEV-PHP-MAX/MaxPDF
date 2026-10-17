@@ -5,6 +5,23 @@ arquivo. O formato segue aproximadamente o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [2.2.1] - 2026-10-17
+
+### Adicionado
+
+- Imagens → PDF agora aceita "Selecionar pasta" e arrastar pastas,
+  com subpastas. As imagens entram em ordem natural de nome
+  (`foto1`, `foto2`, `foto10`), que vira a ordem das páginas.
+
+### Corrigido
+
+- Juntar PDFs: depois de "Limpar lista", a ordenação volta para
+  "A → Z" em vez de continuar em "Manual".
+- Avisos com a palavra certa para cada ferramenta ("3 imagens
+  adicionadas", "documentos encontrados") em vez de sempre "arquivos".
+- A lista de arquivos não tem mais rolagem própria dentro da tela; a
+  página inteira rola, o que fica mais natural com listas grandes.
+
 ## [2.2.0] - 2026-10-17
 
 ### Adicionado

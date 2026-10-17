@@ -53,7 +53,7 @@ logger = logging.getLogger("maxpdf")
 QUEUE_TOOLS = ("reverse", "merge", "rotate", "images", "word2pdf", "pdf2word")
 ALL_TOOLS = QUEUE_TOOLS + ("split",)
 # Ferramentas que aceitam "Selecionar pasta" (busca recursiva)
-FOLDER_TOOLS = ("reverse", "merge", "rotate", "word2pdf", "pdf2word")
+FOLDER_TOOLS = ("reverse", "merge", "rotate", "images", "word2pdf", "pdf2word")
 WORD_TOOLS = {"word2pdf": TO_PDF, "pdf2word": TO_WORD}
 
 SORT_MODES = ("name_asc", "name_desc", "path", "modified", "custom")
@@ -200,6 +200,17 @@ class Api:
                 self._apply_sort()
             return {"added": added, "skipped": skipped, "duplicates": len(valid) - added}
 
+    def _add_scanned(self, tool: str, found: List[PdfFile]) -> int:
+        """Adiciona o resultado de uma busca em pasta à fila da ferramenta."""
+        if tool == "images":
+            # A ordem das imagens vira a ordem das páginas do PDF.
+            found = sorted(found, key=lambda f: natural_sort_key(f.display_path))
+        with self._lock:
+            added = self._queues[tool].add_many(found)
+            if tool == "merge" and self._sort_mode != "custom":
+                self._apply_sort()
+        return added
+
     def _validate(self, tool: str) -> str:
         if tool not in ALL_TOOLS:
             raise ValueError(f"Ferramenta desconhecida: {tool}")
@@ -244,11 +255,8 @@ class Api:
             self._emit("scan", {"tool": tool, "count": count, "done": False})
 
         def done(files: List[PdfFile]) -> None:
-            with self._lock:
-                added = self._queues[tool].add_many(files)
-                if tool == "merge" and self._sort_mode != "custom":
-                    self._apply_sort()
-                self._scanners.pop(tool, None)
+            added = self._add_scanned(tool, files)
+            self._scanners.pop(tool, None)
             self._emit("scan", {"tool": tool, "count": len(files), "added": added, "done": True})
             self._push_state(tool)
 
@@ -278,6 +286,9 @@ class Api:
                 self._split_file = None
             else:
                 self._queues[tool].clear()
+                if tool == "merge":
+                    # Lista nova começa na ordenação padrão, não na "Manual".
+                    self._sort_mode = "name_asc"
         return self._state(tool)
 
     def move(self, tool: str, old_index: int, new_index: int) -> Dict[str, Any]:
@@ -459,10 +470,7 @@ class Api:
                 self._emit("scan", {"tool": tool, "count": count, "done": False})
 
             def done(found: List[PdfFile]) -> None:
-                with self._lock:
-                    added = self._queues[tool].add_many(found)
-                    if tool == "merge" and self._sort_mode != "custom":
-                        self._apply_sort()
+                added = self._add_scanned(tool, found)
                 self._emit("scan", {"tool": tool, "count": len(found), "added": added, "done": True})
                 self._push_state(tool)
 

@@ -58,7 +58,7 @@
     images: {
       label: "Imagens → PDF", icon: "image-plus", eyebrow: "JPG, PNG, WEBP, BMP, TIFF",
       desc: "Junta imagens em um único PDF, na ordem da lista. Transparências viram fundo branco.",
-      action: "Gerar PDF", folder: false, kind: "img", reorder: true,
+      action: "Gerar PDF", folder: true, kind: "img", reorder: true,
     },
     word2pdf: {
       label: "Word → PDF", icon: "file-output", eyebrow: "DOCX, DOC, RTF, ODT",
@@ -71,6 +71,13 @@
       action: "Converter para Word", folder: true, kind: "pdf", word: true,
     },
   };
+  // Palavras usadas nos avisos, conforme o tipo de arquivo da ferramenta.
+  const WORDS = {
+    pdf: { what: "PDFs", found: "encontrados", added: ["PDF adicionado", "PDFs adicionados"], none: "Nenhum PDF encontrado nessa pasta." },
+    img: { what: "imagens", found: "encontradas", added: ["imagem adicionada", "imagens adicionadas"], none: "Nenhuma imagem compatível nessa pasta." },
+    doc: { what: "documentos", found: "encontrados", added: ["documento adicionado", "documentos adicionados"], none: "Nenhum documento do Word nessa pasta." },
+  };
+  const wordsKey = (tool) => (TOOLS[tool] && TOOLS[tool].kind) || "pdf";
   const ORDER = ["reverse", "merge", "split", "rotate", "images", "word2pdf", "pdf2word"];
   const NAV_GROUPS = { reverse: "Ferramentas", word2pdf: "Converter" };
   const SORTS = [
@@ -113,15 +120,16 @@
     scan(p) {
       const el = $(`.scan[data-tool="${p.tool}"]`);
       if (!p.done) {
-        const what = p.tool === "word2pdf" ? "documentos" : "PDFs";
-        if (el) { el.hidden = false; $(".scan-text", el).textContent = p.count ? `Procurando ${what}… ${p.count.toLocaleString("pt-BR")} encontrados` : `Procurando ${what}…`; }
+        const { what, found } = WORDS[wordsKey(p.tool)];
+        if (el) { el.hidden = false; $(".scan-text", el).textContent = p.count ? `Procurando ${what}… ${p.count.toLocaleString("pt-BR")} ${found}` : `Procurando ${what}…`; }
         return;
       }
       if (el) el.hidden = true;
       if (p.error) return toast(`Erro ao procurar PDFs: ${p.error}`, "error");
       const dup = (p.count || 0) - (p.added || 0);
-      if (!p.count) toast(p.tool === "word2pdf" ? "Nenhum documento do Word nessa pasta." : "Nenhum PDF encontrado nessa pasta.", "warn");
-      else toast(`${p.tool === "word2pdf" ? plural(p.added, "documento adicionado", "documentos adicionados") : plural(p.added, "PDF adicionado", "PDFs adicionados")}${dup ? ` · ${dup} já estava${dup > 1 ? "m" : ""} na lista` : ""}.`, "success");
+      const w = WORDS[wordsKey(p.tool)];
+      if (!p.count) toast(w.none, "warn");
+      else toast(`${plural(p.added, w.added[0], w.added[1])}${dup ? ` · ${dup} já estava${dup > 1 ? "m" : ""} na lista` : ""}.`, "success");
     },
     dropped(p) { reportAdded(p); },
     progress(p) { updateProgress(p); },
@@ -130,7 +138,8 @@
 
   function reportAdded(p) {
     const parts = [];
-    if (p.added) parts.push(plural(p.added, "arquivo adicionado", "arquivos adicionados"));
+    const w = WORDS[wordsKey(p.tool)];
+    if (p.added) parts.push(plural(p.added, w.added[0], w.added[1]));
     if (p.duplicates) parts.push(`${p.duplicates} repetido${p.duplicates > 1 ? "s" : ""} ignorado${p.duplicates > 1 ? "s" : ""}`);
     if (p.skipped) parts.push(`${p.skipped} incompatíve${p.skipped > 1 ? "is" : "l"} ignorado${p.skipped > 1 ? "s" : ""}`);
     if (!parts.length) return;
@@ -253,12 +262,12 @@
         </div>
         <div class="dz-body">
           <h3>Arraste ${img ? "imagens" : `${what} ou pastas`} para cá</h3>
-          <p>${img ? "Ou escolha os arquivos no computador." : "Ou escolha no computador. Pastas são lidas com todas as subpastas."}</p>
+          <p>Ou escolha no computador. Pastas são lidas com todas as subpastas${img ? ", em ordem de nome" : ""}.</p>
           <div class="dz-actions">
             <button class="btn btn-primary" data-act="pick" type="button"><span class="btn-label">${ic("file-plus-2")}Selecionar ${img ? "imagens" : doc ? "documentos" : "PDFs"}</span></button>
             ${t.folder ? `<button class="btn" data-act="folder" type="button"><span class="btn-label">${ic("folder-open")}Selecionar pasta</span></button>` : ""}
           </div>
-          <div class="scan" data-tool="${key}" hidden><span class="spinner"></span><span class="scan-text">Procurando ${doc ? "documentos" : "PDFs"}…</span></div>
+          <div class="scan" data-tool="${key}" hidden><span class="spinner"></span><span class="scan-text">Procurando ${WORDS[wordsKey(key)].what}…</span></div>
         </div>
       </section>`;
   }
@@ -464,7 +473,7 @@
       if (act === "pick") {
         const r = await a.pick_files(key);
         if (r && r.state) applyState(r.state, { enterNew: true });
-        if (r && key !== "split") reportAdded(r);
+        if (r && key !== "split") reportAdded({ ...r, tool: key });
       } else if (act === "folder") {
         await a.pick_folder(key);
       } else if (act === "clear") {
@@ -990,7 +999,7 @@
         return delay(true);
       },
       remove: (tool, idx) => { if (tool === "split") split = null; else idx.sort((a, b) => b - a).forEach((i) => q[tool].splice(i, 1)); return delay(st(tool)); },
-      clear: (tool) => { if (tool === "split") split = null; else q[tool] = []; return delay(st(tool)); },
+      clear: (tool) => { if (tool === "split") split = null; else q[tool] = []; if (tool === "merge") sort = "name_asc"; return delay(st(tool)); },
       move: (tool, a, b) => { const [x] = q[tool].splice(a, 1); q[tool].splice(b, 0, x); if (tool === "merge") sort = "custom"; return delay(st(tool)); },
       set_sort: (mode) => {
         sort = mode;
