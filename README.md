@@ -56,11 +56,11 @@ escolhido por você.
 
 ## Requisitos de desenvolvimento
 
-- Python 3.12
-- Windows 10 ou 11 (para gerar e usar o `.exe`; o código roda em
-  qualquer plataforma com Python + Tkinter durante o desenvolvimento)
+- Python 3.12 ou mais novo (testado no 3.14)
+- Windows 10 ou 11 com o Microsoft Edge WebView2 Runtime (já vem
+  instalado no Windows 11 e nas versões atualizadas do Windows 10)
 - Dependências listadas em `requirements.txt`:
-  - [`customtkinter`](https://github.com/TomSchimansky/CustomTkinter) — interface gráfica
+  - [`pywebview`](https://pywebview.flowrl.com/) — janela nativa que exibe a interface HTML
   - [`pypdf`](https://github.com/py-pdf/pypdf) — manipulação de PDF sem rasterização
   - [`Pillow`](https://python-pillow.org/) — leitura/conversão de imagens
 - Para desenvolvimento/build, também: `pytest` e `pyinstaller`
@@ -88,6 +88,35 @@ Ou, manualmente, a partir da raiz do projeto:
 python src/main.py
 ```
 
+Com `python src/main.py --debug` o app abre com as ferramentas de
+desenvolvedor do WebView (inspecionar elementos, console).
+
+Para mexer só no visual, dá para abrir `src/web/index.html` em um
+servidor local qualquer (ex.: `python -m http.server -d src/web`): fora
+do app, a interface usa uma simulação da API com arquivos de exemplo.
+Acrescente `?motion` à URL para ver as animações mesmo com "reduzir
+movimento" ligado no sistema.
+
+## Interface
+
+A interface fica em `src/web/` (HTML, CSS e JavaScript puro) e roda
+dentro de uma janela nativa do pywebview. Todas as bibliotecas estão
+copiadas na pasta `src/web/vendor/`, sem CDN, então o app continua
+100% offline:
+
+- [GSAP](https://gsap.com/) 3.13 com os plugins Flip e SplitText —
+  animações de entrada, troca de ferramenta, reordenação da lista,
+  barra de progresso e resumo final
+- [Lucide](https://lucide.dev/) — ícones
+- Fonte [Inter](https://rsms.me/inter/) (variável, em `src/web/fonts/`)
+
+O JavaScript conversa com o Python pela `window.pywebview.api`
+(classe `Api` em `src/desktop/api.py`). Progresso e fim de
+processamento chegam do Python via `window.maxpdf.receive(...)`.
+
+A interface tem tema escuro e claro (botão no rodapé do menu) e
+respeita a opção "reduzir movimento" do Windows.
+
 ## Geração do executável (MaxPDF.exe)
 
 No Windows, com o Python instalado, basta clicar duas vezes em:
@@ -101,13 +130,13 @@ executa o PyInstaller equivalente a:
 
 ```bash
 python -m PyInstaller --noconfirm --clean --onefile --windowed ^
-    --name "MaxPDF" --collect-all customtkinter src/main.py
+    --name "MaxPDF" --add-data "src\web;src\web" src/main.py
 ```
 
 O executável final é gerado em `dist/MaxPDF.exe` e pode ser copiado
 para qualquer computador com Windows 10/11 — não requer Python,
-pypdf, Pillow, CustomTkinter ou PyInstaller instalados na máquina de
-destino.
+pypdf, Pillow, pywebview ou PyInstaller instalados na máquina de
+destino (só o WebView2 Runtime, que o Windows já traz).
 
 ## Estrutura do projeto
 
@@ -117,20 +146,16 @@ MaxPDF/
 │   ├── main.py                 # Ponto de entrada
 │   ├── version.py              # Versão única do aplicativo (SemVer)
 │   │
-│   ├── ui/                     # Interface gráfica (CustomTkinter)
-│   │   ├── main_window.py      # Janela principal (menu lateral + conteúdo)
-│   │   ├── sidebar.py          # Menu lateral azul
-│   │   ├── file_list.py        # Lista de arquivos reutilizável (Treeview)
-│   │   ├── progress.py         # Barra de progresso + cancelamento
-│   │   ├── dialogs.py          # Diálogos de resumo/erro
-│   │   ├── theme.py            # Cores, fontes e DPI awareness
-│   │   └── tool_panels/        # Um painel por ferramenta
-│   │       ├── common.py       # Seleção de arquivos/pastas, busca assíncrona
-│   │       ├── reverse_panel.py
-│   │       ├── merge_panel.py
-│   │       ├── split_panel.py
-│   │       ├── rotate_panel.py
-│   │       └── images_panel.py
+│   ├── desktop/                # Janela nativa (pywebview)
+│   │   ├── app.py              # Cria a janela e liga o arrastar-e-soltar
+│   │   └── api.py              # Ponte JS ↔ Python: filas, diálogos, execução
+│   │
+│   ├── web/                    # Interface (HTML/CSS/JS, sem build)
+│   │   ├── index.html
+│   │   ├── styles.css          # Tokens de cor, temas claro/escuro
+│   │   ├── app.js              # Telas, animações GSAP, simulação p/ preview
+│   │   ├── vendor/             # GSAP, Flip, SplitText, Lucide (locais)
+│   │   └── fonts/              # Inter variável
 │   │
 │   ├── tools/                  # Lógica de manipulação de PDF (sem UI)
 │   │   ├── reverse.py
@@ -173,9 +198,10 @@ Consulte o [`CHANGELOG.md`](CHANGELOG.md) para o histórico de versões.
 
 1. Crie uma branch a partir de `main`.
 2. Siga a arquitetura modular existente: lógica de PDF em `tools/`,
-   utilitários sem dependência de UI em `utils/`, e interface em `ui/`.
-3. Reaproveite os componentes já existentes (`FileListWidget`,
-   `ProgressPanel`, `BatchRunner`, `FileQueue`, etc.) em vez de duplicar
+   utilitários sem dependência de UI em `utils/`, ponte com a interface
+   em `desktop/api.py` e telas em `web/`.
+3. Reaproveite os componentes já existentes (`BatchRunner`,
+   `FileQueue`, `FolderScanner`, a `Api` e os blocos do `app.js`) em vez de duplicar
    lógica de seleção de arquivos, busca recursiva, barra de progresso
    ou cancelamento.
 4. Adicione testes em `tests/` para qualquer lógica pura (parsing,
@@ -198,5 +224,5 @@ Consulte o [`CHANGELOG.md`](CHANGELOG.md) para o histórico de versões.
 - Ferramentas futuras (organizar páginas visualmente, excluir/extrair
   páginas, comprimir, marca d'água, numeração, senha, metadados, OCR,
   assinatura, comparação) ainda não estão implementadas; a arquitetura
-  já foi preparada para recebê-las como novos módulos em `tools/` e
-  `ui/tool_panels/`.
+  já foi preparada para recebê-las como novos módulos em `tools/`,
+  um ramo em `Api.run` e uma entrada em `TOOLS` no `app.js`.

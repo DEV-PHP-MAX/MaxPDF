@@ -48,7 +48,7 @@ python -m PyInstaller ^
     --onefile ^
     --windowed ^
     --name "MaxPDF" ^
-    --collect-all customtkinter ^
+    --add-data "src\web;src\web" ^
     src\main.py
 
 if errorlevel 1 (

@@ -21,7 +21,7 @@ if errorlevel 1 (
 )
 
 echo Verificando dependencias do Max PDF...
-python -m pip show customtkinter >nul 2>nul
+python -m pip show pywebview >nul 2>nul
 if errorlevel 1 (
     echo Instalando dependencias necessarias ^(primeira execucao^)...
     python -m pip install -r requirements.txt

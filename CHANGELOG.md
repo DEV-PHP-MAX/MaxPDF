@@ -5,6 +5,35 @@ arquivo. O formato segue aproximadamente o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [2.0.0] - 2026-10-17
+
+### Alterado
+
+- Interface refeita do zero. O CustomTkinter saiu; agora a janela é
+  nativa (pywebview + WebView2) e a tela é HTML/CSS/JS em `src/web/`,
+  com bibliotecas copiadas localmente (continua 100% offline).
+- Visual novo: tema escuro e claro, fonte Inter, ícones Lucide, fundo
+  com gradientes animados e cards translúcidos.
+- Animações com GSAP: abertura com o logo se desenhando, troca de
+  ferramenta com título revelado letra a letra, indicador deslizante no
+  menu, linhas da lista entrando em sequência, reordenação suave (Flip)
+  ao ordenar ou arrastar, barra de progresso com porcentagem animada e
+  resumo final com contadores e confete.
+- Lógica de PDF (`tools/` e `utils/`) não mudou.
+
+### Adicionado
+
+- Arrastar arquivos e pastas do Explorer direto para a janela.
+- Validação ao vivo do campo de páginas (ex.: `1-3,5`), com contagem.
+- Botões subir/descer e remover por linha; arrastar pela alça para
+  reordenar em Juntar PDFs e Imagens → PDF.
+- Avisos rápidos (toasts) para arquivos repetidos ou incompatíveis.
+- `python src/main.py --debug` abre as ferramentas de desenvolvedor.
+
+### Removido
+
+- Pasta `src/ui/` (interface em CustomTkinter).
+
 ## [1.1.0] - 2026-09-15
 
 ### Adicionado
