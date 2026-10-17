@@ -58,8 +58,15 @@ def is_pdf_filename(name: str) -> bool:
     return True
 
 
-def find_pdfs_in_folder(folder: Path, recursive: bool = True):
+def find_pdfs_in_folder(
+    folder: Path,
+    recursive: bool = True,
+    matcher: Callable[[str], bool] = is_pdf_filename,
+):
     """Gera Paths de todos os PDFs encontrados em `folder`.
+
+    `matcher` decide quais nomes de arquivo entram (padrão: PDFs); as
+    ferramentas de Word passam o próprio filtro.
 
     Continua funcionando mesmo se uma subpasta apresentar erro de
     permissão (o erro é simplesmente ignorado para aquela subpasta).
@@ -73,7 +80,7 @@ def find_pdfs_in_folder(folder: Path, recursive: bool = True):
         try:
             with os.scandir(folder) as entries:
                 for entry in entries:
-                    if entry.is_file() and is_pdf_filename(entry.name):
+                    if entry.is_file() and matcher(entry.name):
                         yield Path(entry.path)
         except OSError:
             return
@@ -81,7 +88,7 @@ def find_pdfs_in_folder(folder: Path, recursive: bool = True):
 
     for dirpath, _dirnames, filenames in os.walk(folder, onerror=_on_error):
         for filename in filenames:
-            if is_pdf_filename(filename):
+            if matcher(filename):
                 yield Path(dirpath) / filename
 
 
@@ -101,6 +108,7 @@ class FolderScanner(threading.Thread):
         on_error: Optional[Callable[[Exception], None]] = None,
         recursive: bool = True,
         progress_every: int = 20,
+        matcher: Callable[[str], bool] = is_pdf_filename,
     ) -> None:
         super().__init__(daemon=True)
         self._folders = folders
@@ -110,6 +118,7 @@ class FolderScanner(threading.Thread):
         self._recursive = recursive
         self._progress_every = max(1, progress_every)
         self._cancel = threading.Event()
+        self._matcher = matcher
 
     def cancel(self) -> None:
         self._cancel.set()
@@ -120,7 +129,7 @@ class FolderScanner(threading.Thread):
             for folder in self._folders:
                 if self._cancel.is_set():
                     break
-                for path in find_pdfs_in_folder(folder, recursive=self._recursive):
+                for path in find_pdfs_in_folder(folder, recursive=self._recursive, matcher=self._matcher):
                     if self._cancel.is_set():
                         break
                     found.append(PdfFile(path=path, root=folder))

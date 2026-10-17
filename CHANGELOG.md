@@ -5,6 +5,26 @@ arquivo. O formato segue aproximadamente o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [2.2.0] - 2026-10-17
+
+### Adicionado
+
+- Ferramenta **Word → PDF**: converte `.docx`, `.doc`, `.docm`, `.rtf`,
+  `.odt`, `.dotx` e `.dot` em PDF, em lote, com marcadores a partir
+  dos títulos e estrutura de pastas opcional.
+- Ferramenta **PDF → Word**: transforma PDFs em `.docx` editáveis.
+- As duas usam o Microsoft Word instalado, em uma instância própria e
+  invisível (documentos abertos no Word do usuário não são afetados).
+  Sem o Word, as ferramentas mostram um aviso e ficam desativadas.
+- Proteções para o Word invisível não travar: aviso de conversão de
+  PDF desligado só durante o lote, detecção de qualquer diálogo do
+  Word (o erro mostra o texto do aviso), limite de 5 minutos por
+  arquivo, Cancelar interrompe o Word na hora, e limpeza dos registros
+  de "arquivo problemático" que o Word cria quando é encerrado à força.
+- Menu lateral separado em "Ferramentas" e "Converter".
+- "Selecionar pasta" e arrastar pastas também funcionam para
+  documentos do Word (`FolderScanner` aceita um filtro de nomes).
+
 ## [2.1.0] - 2026-10-17
 
 ### Adicionado

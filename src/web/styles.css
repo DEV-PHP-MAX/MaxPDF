@@ -10,6 +10,7 @@
   --accent: #3D9BFF;
   --accent-2: #8B5CF6;
   --accent-3: #22D3EE;
+  --word: #2B6CEB;
   --success: #22C55E;
   --warning: #F59E0B;
   --danger: #F43F5E;
@@ -364,6 +365,21 @@ html:not(.js) .preloader { display: none; }
   color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .file-ico.img { color: var(--accent-2); background: color-mix(in srgb, var(--accent-2) 12%, transparent); }
+.file-ico.doc { color: var(--word); background: color-mix(in srgb, var(--word) 14%, transparent); }
+.dz-sheet.s3.doc b { background: linear-gradient(135deg, var(--word), #4F8BFF); }
+
+.note { display: flex; gap: 10px; align-items: flex-start; color: var(--muted); font-size: 13px; }
+.note svg.lucide { color: var(--accent); margin-top: 2px; width: 16px; height: 16px; }
+
+.notice { display: flex; gap: 18px; align-items: flex-start; padding: 26px 28px; }
+.notice-ico {
+  width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; flex: none;
+  color: var(--warning); background: color-mix(in srgb, var(--warning) 14%, transparent);
+}
+.notice-ico svg.lucide { width: 24px; height: 24px; }
+.notice h3 { margin: 2px 0 6px; font-size: 17px; }
+.notice p { margin: 0; color: var(--muted); }
+.nav-item.unavailable .nav-text { opacity: .55; }
 .row-main { flex: 1; min-width: 0; }
 .row-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-path { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }

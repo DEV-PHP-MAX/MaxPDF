@@ -52,6 +52,17 @@ janela não aparecer, instale o
 - **Imagens → PDF** — converte JPG, PNG, WEBP, BMP e TIFF em um único
   PDF, na ordem escolhida, tratando corretamente transparência (fundo
   branco).
+- **Word → PDF** — converte documentos `.docx`, `.doc`, `.docm`,
+  `.rtf`, `.odt` (e modelos `.dotx`/`.dot`) em PDF, um arquivo por
+  documento, com marcadores criados a partir dos títulos.
+- **PDF → Word** — transforma PDFs em `.docx` editáveis.
+
+As duas conversões de Word usam o **Microsoft Word instalado no
+computador**, controlado em segundo plano. É o que garante fidelidade
+(fontes, tabelas, imagens) sem mandar nada para a internet. Sem o Word,
+essas duas ferramentas aparecem com um aviso e as demais funcionam
+normalmente. PDFs digitalizados (fotos de papel) viram imagens no
+Word, sem texto editável.
 
 Todas as ferramentas suportam:
 
@@ -94,6 +105,8 @@ escolhido por você.
   - [`pywebview`](https://pywebview.flowrl.com/) — janela nativa que exibe a interface HTML
   - [`pypdf`](https://github.com/py-pdf/pypdf) — manipulação de PDF sem rasterização
   - [`Pillow`](https://python-pillow.org/) — leitura/conversão de imagens
+  - [`pywin32`](https://github.com/mhammond/pywin32) — automação do Word (conversões Word ↔ PDF)
+- Microsoft Word, só para testar as conversões de Word
 - Para desenvolvimento/build, também: `pytest` e `pyinstaller`
   (`requirements-dev.txt`)
 
@@ -252,6 +265,15 @@ Consulte o [`CHANGELOG.md`](CHANGELOG.md) para o histórico de versões.
 - A geração do `.exe` é específica para Windows (PyInstaller
   `--onefile --windowed`); em outras plataformas, execute a partir do
   código-fonte com Python.
+- As conversões Word → PDF e PDF → Word precisam do Microsoft Word
+  instalado. Documentos protegidos por senha são reportados como erro.
+  Se o Word abrir qualquer aviso durante a conversão, ou levar mais de
+  5 minutos em um arquivo, o Max PDF encerra só a instância do Word que
+  ele mesmo abriu, registra o erro e segue com os próximos arquivos.
+- Na conversão PDF → Word, o Max PDF desliga temporariamente o aviso
+  "O Word converterá seu PDF em um documento editável" (preferência
+  `DisableConvertPdfWarning` do Word) e restaura o valor original ao
+  terminar.
 - O aplicativo não modifica PDFs criptografados com criptografia forte
   sem a senha correta, por design — isso é uma proteção, não um bug.
 - Ferramentas futuras (organizar páginas visualmente, excluir/extrair

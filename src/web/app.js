@@ -60,8 +60,19 @@
       desc: "Junta imagens em um único PDF, na ordem da lista. Transparências viram fundo branco.",
       action: "Gerar PDF", folder: false, kind: "img", reorder: true,
     },
+    word2pdf: {
+      label: "Word → PDF", icon: "file-output", eyebrow: "DOCX, DOC, RTF, ODT",
+      desc: "Converte documentos do Word em PDF, um arquivo por documento, com fontes, tabelas e imagens como no original.",
+      action: "Converter para PDF", folder: true, kind: "doc", word: true,
+    },
+    pdf2word: {
+      label: "PDF → Word", icon: "file-pen", eyebrow: "Vira DOCX editável",
+      desc: "Transforma PDFs em documentos do Word que dá para editar. Funciona melhor com PDFs que têm texto selecionável.",
+      action: "Converter para Word", folder: true, kind: "pdf", word: true,
+    },
   };
-  const ORDER = ["reverse", "merge", "split", "rotate", "images"];
+  const ORDER = ["reverse", "merge", "split", "rotate", "images", "word2pdf", "pdf2word"];
+  const NAV_GROUPS = { reverse: "Ferramentas", word2pdf: "Converter" };
   const SORTS = [
     ["name_asc", "A → Z"], ["name_desc", "Z → A"], ["path", "Pasta"], ["modified", "Data"], ["custom", "Manual"],
   ];
@@ -69,7 +80,10 @@
   const state = {
     active: "reverse",
     running: null,
+    wordAvailable: true,
     t: {
+      word2pdf: { items: [], opts: { keepStructure: true } },
+      pdf2word: { items: [], opts: { keepStructure: true } },
       reverse: { items: [], opts: { keepStructure: true } },
       merge: { items: [], sort: "name_asc", opts: {} },
       split: { file: null, opts: { pagesMode: "all", pages: "" } },
@@ -99,14 +113,15 @@
     scan(p) {
       const el = $(`.scan[data-tool="${p.tool}"]`);
       if (!p.done) {
-        if (el) { el.hidden = false; $(".scan-text", el).textContent = p.count ? `Procurando PDFs… ${p.count.toLocaleString("pt-BR")} encontrados` : "Procurando PDFs…"; }
+        const what = p.tool === "word2pdf" ? "documentos" : "PDFs";
+        if (el) { el.hidden = false; $(".scan-text", el).textContent = p.count ? `Procurando ${what}… ${p.count.toLocaleString("pt-BR")} encontrados` : `Procurando ${what}…`; }
         return;
       }
       if (el) el.hidden = true;
       if (p.error) return toast(`Erro ao procurar PDFs: ${p.error}`, "error");
       const dup = (p.count || 0) - (p.added || 0);
-      if (!p.count) toast("Nenhum PDF encontrado nessa pasta.", "warn");
-      else toast(`${plural(p.added, "PDF adicionado", "PDFs adicionados")}${dup ? ` · ${dup} já estava${dup > 1 ? "m" : ""} na lista` : ""}.`, "success");
+      if (!p.count) toast(p.tool === "word2pdf" ? "Nenhum documento do Word nessa pasta." : "Nenhum PDF encontrado nessa pasta.", "warn");
+      else toast(`${p.tool === "word2pdf" ? plural(p.added, "documento adicionado", "documentos adicionados") : plural(p.added, "PDF adicionado", "PDFs adicionados")}${dup ? ` · ${dup} já estava${dup > 1 ? "m" : ""} na lista` : ""}.`, "success");
     },
     dropped(p) { reportAdded(p); },
     progress(p) { updateProgress(p); },
@@ -145,9 +160,9 @@
   const nav = $(".nav");
   const pill = $(".nav-pill");
   function buildNav() {
-    nav.insertAdjacentHTML("afterbegin", `<div class="nav-label">Ferramentas</div>`);
     ORDER.forEach((key) => {
       const t = TOOLS[key];
+      if (NAV_GROUPS[key]) nav.insertAdjacentHTML("beforeend", `<div class="nav-label">${NAV_GROUPS[key]}</div>`);
       nav.insertAdjacentHTML("beforeend",
         `<button class="nav-item" data-tool="${key}" type="button" title="${esc(t.label)}">
           <span class="nav-ico">${ic(t.icon)}</span><span class="nav-text">${esc(t.label)}</span>
@@ -203,6 +218,7 @@
   function renderView() {
     const key = state.active;
     const t = TOOLS[key];
+    const noWord = t.word && !state.wordAvailable;
     const html = `
       <div class="view-inner">
         <header class="head">
@@ -212,9 +228,9 @@
             <p class="desc">${esc(t.desc)}</p>
           </div>
         </header>
-        ${t.single ? singleCard() : dropzoneCard(key)}
-        ${optionsCard(key)}
-        ${t.single ? "" : listCard(key)}
+        ${noWord ? noWordCard() : t.single ? singleCard() : dropzoneCard(key)}
+        ${noWord ? "" : optionsCard(key)}
+        ${t.single || noWord ? "" : listCard(key)}
       </div>`;
     $("#view").innerHTML = html;
     bindView(key);
@@ -226,20 +242,23 @@
   function dropzoneCard(key) {
     const t = TOOLS[key];
     const img = t.kind === "img";
+    const doc = t.kind === "doc";
+    const sheet = img ? "IMG" : doc ? "DOC" : "PDF";
+    const what = img ? "imagens" : doc ? "documentos do Word" : "PDFs";
     return `
       <section class="card dropzone" data-zone>
         <div class="dz-art" aria-hidden="true">
           <span class="dz-sheet s1"></span><span class="dz-sheet s2"></span>
-          <span class="dz-sheet s3"><b>${img ? "IMG" : "PDF"}</b></span>
+          <span class="dz-sheet s3 ${doc ? "doc" : ""}"><b>${sheet}</b></span>
         </div>
         <div class="dz-body">
-          <h3>Arraste ${img ? "imagens" : "PDFs ou pastas"} para cá</h3>
+          <h3>Arraste ${img ? "imagens" : `${what} ou pastas`} para cá</h3>
           <p>${img ? "Ou escolha os arquivos no computador." : "Ou escolha no computador. Pastas são lidas com todas as subpastas."}</p>
           <div class="dz-actions">
-            <button class="btn btn-primary" data-act="pick" type="button"><span class="btn-label">${ic("file-plus-2")}Selecionar ${img ? "imagens" : "PDFs"}</span></button>
+            <button class="btn btn-primary" data-act="pick" type="button"><span class="btn-label">${ic("file-plus-2")}Selecionar ${img ? "imagens" : doc ? "documentos" : "PDFs"}</span></button>
             ${t.folder ? `<button class="btn" data-act="folder" type="button"><span class="btn-label">${ic("folder-open")}Selecionar pasta</span></button>` : ""}
           </div>
-          <div class="scan" data-tool="${key}" hidden><span class="spinner"></span><span class="scan-text">Procurando PDFs…</span></div>
+          <div class="scan" data-tool="${key}" hidden><span class="spinner"></span><span class="scan-text">Procurando ${doc ? "documentos" : "PDFs"}…</span></div>
         </div>
       </section>`;
   }
@@ -260,6 +279,18 @@
         </div>
       </section>
       <section class="card single-card"><div class="single-slot"></div></section>`;
+  }
+
+  function noWordCard() {
+    return `
+      <section class="card notice">
+        <div class="notice-ico">${ic("circle-alert")}</div>
+        <div>
+          <h3>Microsoft Word não encontrado</h3>
+          <p>Esta conversão usa o Word instalado no computador para manter o documento fiel ao original.
+          Instale o Microsoft Word (Microsoft 365 ou Office) e abra o Max PDF de novo.</p>
+        </div>
+      </section>`;
   }
 
   function seg(name, options, value) {
@@ -291,6 +322,13 @@
         ${switchCtl("keepStructure", o.keepStructure)}
       </div>`;
     if (key === "reverse") return `<section class="card options">${keep}</section>`;
+    if (TOOLS[key].word) {
+      const tip = key === "word2pdf"
+        ? "A conversão é feita pelo Microsoft Word deste computador, em segundo plano. Documentos abertos no seu Word não são afetados."
+        : "Feito pelo Microsoft Word deste computador. PDFs digitalizados (fotos de papel) viram imagens no Word, sem texto editável.";
+      return `<section class="card options">${keep}<div class="divider"></div>
+        <div class="note">${ic("info")}<span>${tip}</span></div></section>`;
+    }
     if (key === "merge") {
       return `<section class="card options">
         <div class="opt-row">
@@ -349,7 +387,7 @@
     return `<li class="row" data-full="${esc(item.full)}" data-i="${i}">
       ${t.reorder ? `<span class="row-handle" title="Arraste para reordenar">${ic("grip-vertical")}</span>` : ""}
       <span class="row-idx">${i + 1}</span>
-      <span class="file-ico ${t.kind === "img" ? "img" : ""}">${ic(t.kind === "img" ? "image" : "file-text")}</span>
+      <span class="file-ico ${t.kind === "img" ? "img" : t.kind === "doc" ? "doc" : ""}">${ic(t.kind === "img" ? "image" : t.kind === "doc" ? "file-type" : "file-text")}</span>
       <div class="row-main">
         <div class="row-name" title="${esc(item.name)}">${esc(item.name)}</div>
         <div class="row-path" title="${esc(item.full)}"><bdi>${esc(item.path)}</bdi></div>
@@ -639,6 +677,8 @@
       case "split": return pages ? `Extrair ${pages} em um novo arquivo` : "Um arquivo para cada página";
       case "rotate": return `${o.angle}° · ${pages || "todas as páginas"} · ${keep}`;
       case "images": return "Na ordem da lista · você escolhe onde salvar";
+      case "word2pdf": return `Saída em “PDFs_Convertidos”, ${keep}`;
+      case "pdf2word": return `Saída em “Word_Convertidos”, ${keep}`;
     }
     return "";
   }
@@ -647,14 +687,16 @@
     const key = state.active;
     const t = TOOLS[key];
     const n = t.single ? (state.t.split.file ? 1 : 0) : state.t[key].items.length;
-    const noun = t.kind === "img" ? ["imagem", "imagens"] : ["arquivo", "arquivos"];
+    const noun = { img: ["imagem", "imagens"], doc: ["documento", "documentos"] }[t.kind] || ["arquivo", "arquivos"];
     $("[data-ab-title]", actionbar).textContent = n
       ? (t.single ? state.t.split.file.name : `${plural(n, noun[0], noun[1])} na lista`)
-      : (t.single ? "Nenhum PDF selecionado" : `Nenhum${t.kind === "img" ? "a imagem" : " arquivo"} na lista`);
+      : (t.single ? "Nenhum PDF selecionado" : `Nenhum${t.kind === "img" ? "a imagem" : ` ${noun[0]}`} na lista`);
     $("[data-ab-sub]", actionbar).textContent = n ? summary(key) : "Adicione arquivos para começar";
     $("[data-run-label]", actionbar).innerHTML = `${ic(t.icon)}${esc(t.action)}`;
     const busyElsewhere = state.running && state.running !== key;
-    $("[data-run]", actionbar).disabled = !n || !!busyElsewhere;
+    const noWord = t.word && !state.wordAvailable;
+    $("[data-run]", actionbar).disabled = !n || !!busyElsewhere || noWord;
+    if (noWord) $("[data-ab-sub]", actionbar).textContent = "Precisa do Microsoft Word instalado";
     if (busyElsewhere) $("[data-ab-sub]", actionbar).textContent = `Aguarde: “${TOOLS[state.running].label}” está em andamento`;
     const runningHere = state.running === key;
     actionbar.classList.toggle("running", runningHere);
@@ -724,7 +766,7 @@
   let lastFocus = null;
   function openModal(p) {
     lastFocus = document.activeElement;
-    const nouns = { arquivo: ["arquivo", "arquivos"], página: ["página", "páginas"], imagem: ["imagem", "imagens"] }[p.noun] || ["item", "itens"];
+    const nouns = { arquivo: ["arquivo", "arquivos"], página: ["página", "páginas"], imagem: ["imagem", "imagens"], documento: ["documento", "documentos"] }[p.noun] || ["item", "itens"];
     const ok = !p.cancelled && p.failed === 0 && p.succeeded > 0;
     const bad = p.succeeded === 0;
     const badge = $("#modalBadge");
@@ -914,18 +956,18 @@
 
   /* ---------- Simulação (somente fora do app, para preview) ---------- */
   function createMockApi() {
-    const q = { reverse: [], merge: [], rotate: [], images: [] };
+    const q = { reverse: [], merge: [], rotate: [], images: [], word2pdf: [], pdf2word: [] };
     let split = null, sort = "name_asc", n = 0;
     const fake = (tool) => {
       n++;
       const img = tool === "images";
-      const name = img ? `Foto_${String(n).padStart(3, "0")}.jpg` : `Lei_${n}_2026.pdf`;
+      const name = img ? `Foto_${String(n).padStart(3, "0")}.jpg` : tool === "word2pdf" ? `Oficio_${n}_2026.docx` : `Lei_${n}_2026.pdf`;
       return { name, path: `Documentos\\Câmara\\${name}`, full: `C:\\Users\\Max\\Documentos\\Câmara\\${name}`, size: `${(Math.random() * 4 + 0.2).toFixed(1)} MB` };
     };
     const st = (tool) => tool === "split" ? { tool, file: split } : { tool, items: q[tool].slice(), sort };
     const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120));
     return {
-      set_active() {}, get_info: () => delay({ version: "2.0.0 (preview)" }), get_state: (tool) => delay(st(tool)),
+      set_active() {}, get_info: () => delay({ version: "preview", wordAvailable: !location.search.includes("noword") }), get_state: (tool) => delay(st(tool)),
       pick_files: (tool) => {
         if (tool === "split") { split = { name: "Relatorio_Anual.pdf", full: "C:\\Docs\\Relatorio_Anual.pdf", size: "8.4 MB" }; return delay({ state: st(tool) }); }
         const k = 3 + ((Math.random() * 4) | 0);
@@ -972,7 +1014,7 @@
           if (i >= total || this._cancel) {
             clearInterval(it);
             const failed = total > 4 ? 1 : 0;
-            window.maxpdf.receive({ event: "done", payload: { tool, noun: tool === "split" ? "página" : tool === "images" ? "imagem" : "arquivo", total, succeeded: i - failed, failed, processed: i, cancelled: this._cancel, elapsed: "3 s", outputDir: "C:\\Saida", errors: failed ? [{ item: "Lei_2_2026.pdf", message: "PDF protegido por senha" }] : [] } });
+            window.maxpdf.receive({ event: "done", payload: { tool, noun: tool === "split" ? "página" : tool === "images" ? "imagem" : tool === "word2pdf" ? "documento" : "arquivo", total, succeeded: i - failed, failed, processed: i, cancelled: this._cancel, elapsed: "3 s", outputDir: "C:\\Saida", errors: failed ? [{ item: "Lei_2_2026.pdf", message: "PDF protegido por senha" }] : [] } });
           }
         }, 260);
         return delay({ started: true });
@@ -1000,6 +1042,11 @@
     whenApi.then(async (a) => {
       api = a;
       const info = await a.get_info();
+      state.wordAvailable = info.wordAvailable !== false;
+      if (!state.wordAvailable) {
+        $$(".nav-item").filter((b) => TOOLS[b.dataset.tool].word).forEach((b) => b.classList.add("unavailable"));
+        if (TOOLS[state.active].word) renderView();
+      }
       $("#version").textContent = `v${info.version}`;
       for (const k of ORDER) {
         const s = await a.get_state(k);

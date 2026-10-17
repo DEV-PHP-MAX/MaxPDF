@@ -31,6 +31,16 @@ from ..tools.reverse import run_reverse_batch
 from ..tools.rotate import DEFAULT_OUTPUT_FOLDER_NAME as ROTATE_FOLDER
 from ..tools.rotate import VALID_ANGLES, run_rotate_batch
 from ..tools.split import SplitMode, run_split
+from ..tools.word_convert import (
+    TO_PDF,
+    TO_PDF_FOLDER_NAME,
+    TO_WORD,
+    TO_WORD_FOLDER_NAME,
+    WORD_EXTENSIONS,
+    is_word_available,
+    is_word_file,
+    run_word_convert,
+)
 from ..utils.batch import BatchResult
 from ..utils.file_scanner import FileQueue, FolderScanner, PdfFile, is_pdf_filename
 from ..utils.helpers import bytes_to_human, format_duration, open_folder
@@ -40,8 +50,11 @@ from ..utils.page_ranges import parse_page_ranges
 
 logger = logging.getLogger("maxpdf")
 
-QUEUE_TOOLS = ("reverse", "merge", "rotate", "images")
+QUEUE_TOOLS = ("reverse", "merge", "rotate", "images", "word2pdf", "pdf2word")
 ALL_TOOLS = QUEUE_TOOLS + ("split",)
+# Ferramentas que aceitam "Selecionar pasta" (busca recursiva)
+FOLDER_TOOLS = ("reverse", "merge", "rotate", "word2pdf", "pdf2word")
+WORD_TOOLS = {"word2pdf": TO_PDF, "pdf2word": TO_WORD}
 
 SORT_MODES = ("name_asc", "name_desc", "path", "modified", "custom")
 
@@ -50,6 +63,23 @@ IMAGE_FILE_TYPES = (
     "Imagens (" + ";".join(f"*{ext}" for ext in SUPPORTED_EXTENSIONS) + ")",
     "Todos os arquivos (*.*)",
 )
+WORD_FILE_TYPES = (
+    "Documentos do Word (" + ";".join(f"*{ext}" for ext in WORD_EXTENSIONS) + ")",
+    "Todos os arquivos (*.*)",
+)
+
+
+def _matcher(tool: str):
+    """Filtro de nome de arquivo aceito por cada ferramenta."""
+    if tool == "images":
+        return lambda name: is_supported_image(Path(name))
+    if tool == "word2pdf":
+        return is_word_file
+    return is_pdf_filename
+
+
+def _file_types(tool: str):
+    return {"images": IMAGE_FILE_TYPES, "word2pdf": WORD_FILE_TYPES}.get(tool, PDF_FILE_TYPES)
 
 # Intervalo mínimo entre eventos de progresso enviados à interface,
 # para não inundar o WebView em lotes com milhares de arquivos.
@@ -162,10 +192,8 @@ class Api:
     def _add_paths(self, tool: str, paths: List[Path]) -> Dict[str, int]:
         """Adiciona arquivos soltos à fila da ferramenta. Retorna contagens."""
         with self._lock:
-            if tool == "images":
-                valid = [p for p in paths if is_supported_image(p)]
-            else:
-                valid = [p for p in paths if is_pdf_filename(p.name)]
+            accepts = _matcher(tool)
+            valid = [p for p in paths if accepts(p.name)]
             skipped = len(paths) - len(valid)
             added = self._queues[tool].add_many([PdfFile(path=p, root=None) for p in valid])
             if tool == "merge" and self._sort_mode != "custom":
@@ -183,6 +211,7 @@ class Api:
             "name": version.APP_NAME,
             "subtitle": version.APP_SUBTITLE,
             "version": version.APP_VERSION,
+            "wordAvailable": is_word_available(),
         }
 
     def get_state(self, tool: str) -> Dict[str, Any]:
@@ -198,14 +227,13 @@ class Api:
             if paths:
                 self._split_file = paths[0]
             return {"state": self._state(tool), "added": 1 if paths else 0}
-        file_types = IMAGE_FILE_TYPES if tool == "images" else PDF_FILE_TYPES
-        paths = self._dialog(webview.FileDialog.OPEN, multiple=True, file_types=file_types)
+        paths = self._dialog(webview.FileDialog.OPEN, multiple=True, file_types=_file_types(tool))
         counts = self._add_paths(tool, paths or [])
         return {"state": self._state(tool), **counts}
 
     def pick_folder(self, tool: str) -> bool:
         tool = self._validate(tool)
-        if tool not in ("reverse", "merge", "rotate"):
+        if tool not in FOLDER_TOOLS:
             return False
         paths = self._dialog(webview.FileDialog.FOLDER)
         if not paths:
@@ -228,7 +256,7 @@ class Api:
             self._scanners.pop(tool, None)
             self._emit("scan", {"tool": tool, "error": str(exc), "done": True})
 
-        scanner = FolderScanner([folder], progress, done, on_error=on_error)
+        scanner = FolderScanner([folder], progress, done, on_error=on_error, matcher=_matcher(tool))
         self._scanners[tool] = scanner
         self._emit("scan", {"tool": tool, "count": 0, "done": False, "folder": folder.name})
         scanner.start()
@@ -296,6 +324,8 @@ class Api:
             return {"started": False, "message": "Adicione pelo menos um arquivo."}
         if tool == "split" and self._split_file is None:
             return {"started": False, "message": "Selecione um PDF."}
+        if tool in WORD_TOOLS and not is_word_available():
+            return {"started": False, "message": "Esta conversão precisa do Microsoft Word instalado."}
 
         pages_spec = (options.get("pages") or "").strip() or None
         if options.get("pagesMode") == "specific" and not pages_spec:
@@ -336,7 +366,7 @@ class Api:
                 },
             )
 
-        noun = {"split": "página", "images": "imagem"}.get(tool, "arquivo")
+        noun = {"split": "página", "images": "imagem", "word2pdf": "documento"}.get(tool, "arquivo")
 
         def on_done(result: BatchResult) -> None:
             self._runners.pop(tool, None)
@@ -361,6 +391,12 @@ class Api:
                 keep_structure,
                 on_progress,
                 on_done,
+            )
+        elif tool in WORD_TOOLS:
+            direction = WORD_TOOLS[tool]
+            folder_name = TO_PDF_FOLDER_NAME if direction == TO_PDF else TO_WORD_FOLDER_NAME
+            runner = run_word_convert(
+                files, unique_dir(destination / folder_name), direction, keep_structure, on_progress, on_done
             )
         elif tool == "merge":
             runner = run_merge(files, output_path, on_progress, on_done)
@@ -412,12 +448,12 @@ class Api:
             return
 
         counts = self._add_paths(tool, files) if files else {"added": 0, "skipped": 0, "duplicates": 0}
-        if folders and tool == "images":
+        if folders and tool not in FOLDER_TOOLS:
             counts["skipped"] += len(folders)
         self._emit("dropped", {"tool": tool, **counts})
         self._push_state(tool)
 
-        if folders and tool != "images":
+        if folders and tool in FOLDER_TOOLS:
 
             def progress(count: int) -> None:
                 self._emit("scan", {"tool": tool, "count": count, "done": False})
@@ -431,4 +467,4 @@ class Api:
                 self._push_state(tool)
 
             self._emit("scan", {"tool": tool, "count": 0, "done": False})
-            FolderScanner(folders, progress, done).start()
+            FolderScanner(folders, progress, done, matcher=_matcher(tool)).start()
