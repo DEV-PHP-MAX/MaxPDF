@@ -14,22 +14,36 @@
       document.documentElement.classList.add("js");
     })();
   </script>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <!-- Abertura -->
   <div class="preloader" aria-hidden="true">
     <div class="preloader-mark">
-      <svg viewBox="0 0 64 64" class="logo-svg">
+      <!-- Mesma geometria de assets/icons/maxpdf.svg, separada em peças para animar -->
+      <svg viewBox="0 0 512 512" class="logo-svg">
         <defs>
-          <linearGradient id="lg-pre" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="var(--accent)"/>
-            <stop offset="1" stop-color="var(--accent-2)"/>
+          <linearGradient id="pre-bg" x1="40" y1="24" x2="472" y2="488" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#3D9BFF"/><stop offset=".55" stop-color="#5B6CFF"/><stop offset="1" stop-color="#9A4DFF"/>
+          </linearGradient>
+          <radialGradient id="pre-shine" cx="150" cy="70" r="360" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="pre-ink" x1="200" y1="250" x2="330" y2="380" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#2F7BFF"/><stop offset="1" stop-color="#8B3DFF"/>
           </linearGradient>
         </defs>
-        <path class="draw" d="M18 6h20l14 14v34a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4z" fill="none" stroke="url(#lg-pre)" stroke-width="3.2" stroke-linejoin="round"/>
-        <path class="draw" d="M38 6v14h14" fill="none" stroke="url(#lg-pre)" stroke-width="3.2" stroke-linejoin="round"/>
-        <path class="draw" d="M22 46V30l9 10 9-10v16" fill="none" stroke="url(#lg-pre)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <g class="lp-bg">
+          <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#pre-bg)"/>
+          <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#pre-shine)"/>
+        </g>
+        <rect class="lp-back" x="134" y="118" width="214" height="276" rx="30" fill="#fff" fill-opacity=".28" transform="rotate(-11 241 256)"/>
+        <g class="lp-front">
+          <path d="M192 104h122l86 86v204a30 30 0 0 1-30 30H192a30 30 0 0 1-30-30V134a30 30 0 0 1 30-30z" fill="#fff"/>
+          <path class="lp-fold" d="M314 104v56a30 30 0 0 0 30 30h56z" fill="#D9DEFF"/>
+        </g>
+        <path class="lp-m" d="M214 372V254l67 76 67-76v118" fill="none" stroke="url(#pre-ink)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <div class="preloader-word"><span>MAX</span><span class="grad">PDF</span></div>
     </div>
@@ -44,19 +58,7 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">
-          <svg viewBox="0 0 64 64" class="logo-svg">
-            <defs>
-              <linearGradient id="lg-side" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="var(--accent)"/>
-                <stop offset="1" stop-color="var(--accent-2)"/>
-              </linearGradient>
-            </defs>
-            <path d="M18 6h20l14 14v34a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4z" fill="none" stroke="url(#lg-side)" stroke-width="4" stroke-linejoin="round"/>
-            <path d="M38 6v14h14" fill="none" stroke="url(#lg-side)" stroke-width="4" stroke-linejoin="round"/>
-            <path d="M22 46V30l9 10 9-10v16" fill="none" stroke="url(#lg-side)" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
+        <img class="brand-mark" src="logo.svg" alt="" width="46" height="46">
         <div class="brand-text">
           <strong>MAX <span class="grad">PDF</span></strong>
           <small>Ferramentas para PDF</small>

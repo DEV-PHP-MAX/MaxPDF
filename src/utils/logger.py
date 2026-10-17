@@ -41,6 +41,11 @@ def setup_logger(level: int = logging.INFO) -> logging.Logger:
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
+        # Avisos e erros da janela (pywebview/WebView2) vão para o mesmo
+        # arquivo; no .exe não existe console para mostrá-los.
+        webview_logger = logging.getLogger("pywebview")
+        webview_logger.setLevel(logging.WARNING)
+        webview_logger.addHandler(handler)
     except OSError:
         # Se não for possível criar o arquivo de log (ex.: sem
         # permissão de escrita), continuamos sem logging em arquivo em

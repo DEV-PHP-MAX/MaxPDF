@@ -894,11 +894,18 @@
         .from(actionbar, { yPercent: 140, autoAlpha: 0, duration: 0.8, ease: "expo.out" }, "<0.3");
     };
     if (RM) { pre.remove(); switchTool(state.active, true); movePill(false); return; }
-    const paths = $$(".draw", pre);
-    paths.forEach((p) => { const L = p.getTotalLength(); gsap.set(p, { strokeDasharray: L, strokeDashoffset: L }); });
+    // A logo se monta: fundo, folha de trás, folha da frente, dobra e o "M" se desenhando.
+    const m = $(".lp-m", pre);
+    const L = m.getTotalLength();
+    gsap.set(m, { strokeDasharray: L, strokeDashoffset: L });
+    gsap.set(".lp-bg, .lp-back, .lp-front, .lp-fold", { transformOrigin: "50% 50%" });
     gsap.timeline()
-      .to(paths, { strokeDashoffset: 0, duration: 0.9, stagger: 0.12, ease: "power2.inOut" })
-      .from(".preloader-word span", { yPercent: 110, duration: 0.6, stagger: 0.08, ease: "expo.out" }, "-=0.55")
+      .from(".lp-bg", { scale: 0.4, rotate: -25, autoAlpha: 0, duration: 0.7, ease: "back.out(1.7)" })
+      .from(".lp-back", { y: 60, rotate: 10, autoAlpha: 0, duration: 0.55, ease: "power3.out" }, "-=0.3")
+      .from(".lp-front", { y: 80, autoAlpha: 0, duration: 0.6, ease: "back.out(1.6)" }, "-=0.4")
+      .from(".lp-fold", { scale: 0, transformOrigin: "100% 0%", duration: 0.35, ease: "back.out(2.5)" }, "-=0.25")
+      .to(m, { strokeDashoffset: 0, duration: 0.55, ease: "power2.inOut" }, "-=0.15")
+      .from(".preloader-word span", { yPercent: 110, duration: 0.6, stagger: 0.08, ease: "expo.out" }, "-=0.45")
       .to(".preloader-mark", { scale: 0.92, autoAlpha: 0, duration: 0.4, ease: "power2.in" }, "+=0.15")
       .to(pre, { clipPath: "inset(0 0 100% 0)", duration: 0.7, ease: "expo.inOut" }, "-=0.1")
       .add(enterApp, "-=0.45")

@@ -130,7 +130,9 @@ executa o PyInstaller equivalente a:
 
 ```bash
 python -m PyInstaller --noconfirm --clean --onefile --windowed ^
-    --name "MaxPDF" --add-data "src\web;src\web" src/main.py
+    --name "MaxPDF" --icon "assets\icons\maxpdf.ico" ^
+    --add-data "src\web;src\web" ^
+    --add-data "assets\icons\maxpdf.ico;assets\icons" src/main.py
 ```
 
 O executável final é gerado em `dist/MaxPDF.exe` e pode ser copiado
@@ -175,7 +177,7 @@ MaxPDF/
 │       ├── logger.py           # Logging local
 │       └── helpers.py          # Diversos (tempo, pastas, recursos)
 │
-├── assets/icons/                # Ícones do aplicativo
+├── assets/icons/                # Logo: maxpdf.svg (fonte), .png 512 px e .ico 16–256 px
 ├── tests/                       # Testes automatizados (pytest)
 ├── requirements.txt             # Dependências de runtime
 ├── requirements-dev.txt         # + pytest e pyinstaller

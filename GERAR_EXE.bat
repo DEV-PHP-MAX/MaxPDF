@@ -48,7 +48,9 @@ python -m PyInstaller ^
     --onefile ^
     --windowed ^
     --name "MaxPDF" ^
+    --icon "assets\icons\maxpdf.ico" ^
     --add-data "src\web;src\web" ^
+    --add-data "assets\icons\maxpdf.ico;assets\icons" ^
     src\main.py
 
 if errorlevel 1 (

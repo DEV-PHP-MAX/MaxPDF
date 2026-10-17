@@ -5,6 +5,19 @@ arquivo. O formato segue aproximadamente o
 [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [2.1.0] - 2026-10-17
+
+### Adicionado
+
+- Logo própria do Max PDF (`assets/icons/maxpdf.svg`, `.png` e `.ico`
+  com tamanhos de 16 a 256 px).
+- O ícone aparece na janela, na barra de tarefas (também rodando via
+  `python src/main.py`, sem o ícone do Python) e no `MaxPDF.exe`.
+- A abertura do app monta a logo peça por peça.
+- Abrir o app de novo com ele já aberto traz a janela existente para
+  frente, em vez de abrir uma segunda que fechava sozinha.
+- Erros internos da janela (pywebview/WebView2) passam a ir para o log.
+
 ## [2.0.0] - 2026-10-17
 
 ### Alterado
