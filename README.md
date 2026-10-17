@@ -7,6 +7,37 @@ rápida de documentos PDF em lote: inverter páginas, juntar, separar,
 girar e converter imagens em PDF — sem perder qualidade e sem nunca
 enviar seus arquivos para a internet.
 
+## Download
+
+Baixe o `MaxPDF.exe` na página de
+[Releases](https://github.com/DEV-PHP-MAX/MaxPDF/releases/latest) e
+execute. Não precisa instalar nada: é um arquivo só, que pode ser
+copiado para qualquer computador com Windows 10 ou 11 (64 bits).
+
+### "O Windows protegeu o computador"
+
+Na primeira vez, o Windows pode mostrar esse aviso. Ele aparece porque
+o Max PDF é um projeto pessoal e não tem assinatura digital, que é
+paga. Não é sinal de vírus. Para abrir:
+
+1. Clique em **Mais informações**.
+2. Clique em **Executar assim mesmo**.
+
+O aviso não aparece de novo para o mesmo arquivo. Todo o código-fonte
+está neste repositório; se preferir, você pode gerar o `.exe` você
+mesmo (veja [Geração do executável](#geração-do-executável-maxpdfexe)).
+
+Se algum antivírus bloquear o arquivo, adicione-o às exceções. Isso às
+vezes acontece com programas Python empacotados em um único `.exe`.
+
+### Se o app não abrir
+
+O Max PDF usa o Microsoft Edge WebView2 Runtime para desenhar a janela.
+Ele já vem no Windows 11 e nas versões atualizadas do Windows 10. Se a
+janela não aparecer, instale o
+[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)
+(gratuito, da Microsoft) e tente de novo.
+
 ## Funcionalidades
 
 - **Inverter páginas** — inverte a ordem das páginas de um ou vários
